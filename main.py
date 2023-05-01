@@ -1,14 +1,25 @@
+
+import requests
 from bs4 import BeautifulSoup
+url =('https://internshala.com/internships/python-django-internship/')
 
-with open('home.html','r') as html_file:
-    content=html_file.read()
+response = requests.get(url)
 
-    soup = BeautifulSoup(content,'lxml')
-    course_cards = soup.find_all('div',class_="card")
+soup = BeautifulSoup(response.text, "html.parser")
+internships = soup.find_all(class_="individual_internship")
 
-    for course in course_cards:
-        course_name= course.h5.text
-        course_price = course.a.text.split(" ")[-1]
-
-        print(f'{course_name} costs {course_price}')
-
+for internship in internships:
+    title = internship.find("a", class_="view_detail_button").text.strip()
+    company = internship.find("a", class_="link_display_like_text").text.strip()
+    duration = internship.find("div", class_="item_body").text.strip()
+    stipend = internship.find("span", class_="stipend").text.strip()
+    location = internship.find("a", class_="location_link").text.strip()
+    link = "https://internshala.com" + internship.find("a", class_="view_detail_button")["href"]
+    
+    print("Title:", title)
+    print("Company:", company)
+    print("Duration:", duration)
+    print("Stipend:", stipend)
+    print("Location:", location)
+    print("Link:", link)
+    print()
