@@ -31,7 +31,7 @@ def find_internships():
             for skill in skills_container.find_all('span', class_='round_tabs'):
                 skills_list.append(skill.text.strip())
         else:
-            skill_list = ['N/A']
+            skills_list = ['N/A']
 
         # Check if unfamiliar skills are present
         is_unfamiliar_present = False
