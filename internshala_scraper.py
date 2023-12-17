@@ -1,51 +1,61 @@
 import requests
 from bs4 import BeautifulSoup
-import time
+import pandas as pd
 
-def find_internships():
-    # Prompt user to enter unfamiliar skills
-    url="https://internshala.com/internships/work-from-home-internships/"
-    unfamiliar_skills = input("Enter comma-separated list of unfamiliar skills\n>").split(',')
-    print(f"\nFiltering Out {', '.join(unfamiliar_skills)}\n")
+url = "https://www.ktuqbank.com/p/ktu-2019-batch-btech-syllabus.html"
 
-    # Send request and parse HTML
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    internships = soup.find_all('div', class_='internship_meta')
+# Send a GET request to the URL
+response = requests.get(url)
 
-    for internship in internships:
-        title = internship.find('a', class_='view_detail_button').text.strip()
-        company = internship.find('a', class_='link_display_like_text').text.strip()
-        duration = internship.find('div', class_='item_body').text.strip()
-        stipend = internship.find('span', class_='stipend').text.strip()
-        location = internship.find('a', class_='location_link').text.strip()
-        link = 'https://internshala.com' + internship.find('a', class_='view_detail_button')['href']
+# Check if the request was successful (status code 200)
+if response.status_code == 200:
+    # Parse the HTML content of the page
+    soup = BeautifulSoup(response.text, "html.parser")
 
-        # Get skills
-        intern_response = requests.get(link)
-        intern_soup = BeautifulSoup(intern_response.text, 'html.parser')
-        skills = intern_soup.find('div', class_='section_heading heading_5_5 skills_heading')
-        if skills is not None:
-            skills_container = skills.find_next_sibling('div', class_='round_tabs_container')
-            skills_list = []
-            for skill in skills_container.find_all('span', class_='round_tabs'):
-                skills_list.append(skill.text.strip())
-        else:
-            skills_list = ['N/A']
+    # Find the table with the specified ID
+    table = soup.find("table", {"class": "table-mc-blue"})
 
-        # Check if unfamiliar skills are present
-        is_unfamiliar_present = False
-        for skill in unfamiliar_skills:
-            if skill in skills_list:
-                is_unfamiliar_present = True
-                break
+    # Check if the table is found
+    if table:
+        # Create a dictionary to store links for each branch and year
+        links_dict = {}
 
-        if not is_unfamiliar_present:
-            print(f'Title: {title}\nCompany: {company}\nDuration: {duration}\nStipend: {stipend}\nLocation: {location}\nLink: {link}\nSkills: {", ".join(skills_list)}\n{"<"+"=" * 100+">"}\n')
+        # Extract data from the table
+        rows = table.find_all("tr")
 
-if __name__ == '__main__':
-    while True:
-        find_internships()
-        time_wait=10
-        print(f'Waiting Time {time_wait} minutes...')
-        time.sleep(time_wait*60)
+        for row in rows:
+            # Extract data from each cell in the row
+            cells = row.find_all("td")
+
+            # Check if there are at least 3 cells (branch, year, and buttons)
+            if len(cells) >= 3:
+                # Extract branch name and year
+                branch_name = cells[1].text.strip()
+                year_buttons = cells[2].find_all("button")
+
+                # Create a dictionary to store links for the current branch
+                branch_links = {}
+
+                for button in year_buttons:
+                    year = button.find("span").text
+                    link = button.get("onclick").split("'")[
+                        1
+                    ]  # Extract link from onclick attribute
+                    branch_links[year] = link
+
+                # Add the branch and its links to the main dictionary
+                links_dict[branch_name] = branch_links
+
+        # Convert the dictionary to a pandas DataFrame
+        df = pd.DataFrame.from_dict(links_dict, orient="index")
+
+        # Export the DataFrame to an Excel file
+        excel_filename = "ktu_links.xlsx"
+        df.to_excel(excel_filename)
+        print(f"Data has been exported to {excel_filename}")
+
+    else:
+        print("Table not found on the webpage.")
+
+else:
+    print("Failed to retrieve the webpage. Status code:", response.status_code)
