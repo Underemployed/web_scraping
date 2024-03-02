@@ -14,7 +14,7 @@ def scrape_table_data(links_file="Branch.json", data_dict={}):
         branch_data = {}
 
         for year, link in year_links.items():
-            year_data = yr_scrapper.scrape_table_data(link)
+            year_data = yr_scrapper.scrape_table_data(int(year),link)
             branch_data[year] = year_data
 
         data_dict[branch_name] = branch_data
