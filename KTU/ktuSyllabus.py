@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
-import yr_scrapper
+import KTU.yr_scrapper as yr_scrapper
 
 
 def scrape_table_data(links_file="Branch.json", data_dict={}):
